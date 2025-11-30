@@ -10,24 +10,15 @@ router = APIRouter(
     tags=["products"]
 )
 
-
 @router.get("", response_model=ProductListResponse, status_code=status.HTTP_200_OK)
-def get_products(db: Session = Depends(get_db())):
-    service = ProductService(get_db())
+def get_products(db: Session = Depends(get_db)):
+    service = ProductService(db)  # передаём готовую сессию
     return service.get_all_products()
 
-
-@router.get("/{product_id}", response_model=ProductResponse,status_code=status.HTTP_200_OK)
-def get_product(product_id: int, db:Session = Depends(get_db())):
+@router.get("/{product_id}", response_model=ProductResponse, status_code=status.HTTP_200_OK)
+def get_product(product_id: int, db: Session = Depends(get_db)):
     service = ProductService(db)
-    return service.get_products_by_category(product_id)
-
-
-@router.get("/category/{category_id}", response_model=ProductListResponse, status_code=status.HTTP_200_OK)
-def get_products_by_category(category_id: int, db:Session = Depends(get_db())):
-    service = ProductService(db)
-    return service.get_products_by_category(category_id)
-
+    return service.ge
 
 
 
