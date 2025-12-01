@@ -82,3 +82,4 @@ celerybeat-schedule
 celerybeat-schedule-wal
 *.db
 coffetime.db
+shop.db
