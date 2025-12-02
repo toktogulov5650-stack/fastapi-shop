@@ -18,8 +18,6 @@ def get_products(db: Session = Depends(get_db)):
 @router.get("/{product_id}", response_model=ProductResponse, status_code=status.HTTP_200_OK)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     service = ProductService(db)
-    return service.ge
-
-
+    return service.get_product_by_id(product_id)
 
 

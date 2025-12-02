@@ -19,13 +19,13 @@ class ProductService:
 
 
     def get_product_by_id(self, product_id: int) -> ProductResponse:
-        category = self.product_repository.get_by_id(product_id)
-        if not category:
+        product = self.product_repository.get_by_id(product_id)
+        if not product:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Category with id {product_id} not found"
+                detail=f"Product with id {product_id} not found"
             )
-        return ProductResponse.model_validate(category)
+        return ProductResponse.model_validate(product)
 
 
     def get_products_by_category(self, category_id: int) -> ProductListResponse:
