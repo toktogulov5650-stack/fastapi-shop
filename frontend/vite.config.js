@@ -1,4 +1,4 @@
-   // frontend/vite.config.js
+// frontend/vite.config.js
 /**
  * Конфигурация Vite для Vue проекта.
  * Настройка dev сервера и алиасов путей.
