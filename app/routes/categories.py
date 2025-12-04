@@ -27,4 +27,3 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
 
 
 
-

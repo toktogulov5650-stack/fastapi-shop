@@ -1,21 +1,19 @@
 // frontend/src/stores/cart.js
 /**
  * Pinia store для управления корзиной покупок.
- * Хранит состояние корзины в localStorage и синхронизирует с backend.
- * Следует принципу Single Responsibility - отвечает только за логику корзины.
+ * Хранит состояние корзины в памяти и синхронизирует с backend.
  */
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { cartAPI } from '@/services/api'
 
-const CART_STORAGE_KEY = 'shopping_cart'
-
 export const useCartStore = defineStore('cart', () => {
   // State - храним корзину как объект {product_id: quantity}
   const cartItems = ref({})
   const cartDetails = ref(null)
   const loading = ref(false)
+  const error = ref(null)
 
   // Getters
   const itemsCount = computed(() => {
@@ -32,44 +30,29 @@ export const useCartStore = defineStore('cart', () => {
 
   // Actions
   /**
-   * Инициализировать корзину из localStorage
-   */
-  function initCart() {
-    const savedCart = localStorage.getItem(CART_STORAGE_KEY)
-    if (savedCart) {
-      try {
-        cartItems.value = JSON.parse(savedCart)
-      } catch (e) {
-        console.error('Error parsing cart from localStorage:', e)
-        cartItems.value = {}
-      }
-    }
-  }
-
-  /**
-   * Сохранить корзину в localStorage
-   */
-  function saveCart() {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems.value))
-  }
-
-  /**
    * Добавить товар в корзину
    */
   async function addToCart(productId, quantity = 1) {
+    loading.value = true
+    error.value = null
+
     try {
-      const item = {
-        product_id: productId,
-        quantity: quantity,
+      const response = await cartAPI.addItem(productId, quantity, cartItems.value)
+
+      if (response && response.cart) {
+        cartItems.value = response.cart
+        await fetchCartDetails()
+        console.log('✅ Товар добавлен в корзину:', cartItems.value)
+        return true
       }
-      const response = await cartAPI.addItem(item, cartItems.value)
-      cartItems.value = response.data.cart
-      saveCart()
-      await fetchCartDetails()
-      return true
+
+      throw new Error('Неверный формат ответа от сервера')
     } catch (err) {
-      console.error('Error adding to cart:', err)
+      console.error('❌ Ошибка добавления в корзину:', err)
+      error.value = err.message
       return false
+    } finally {
+      loading.value = false
     }
   }
 
@@ -85,9 +68,11 @@ export const useCartStore = defineStore('cart', () => {
     loading.value = true
     try {
       const response = await cartAPI.getCart(cartItems.value)
-      cartDetails.value = response.data
+      cartDetails.value = response
+      console.log('📦 Детали корзины загружены:', cartDetails.value)
     } catch (err) {
-      console.error('Error fetching cart details:', err)
+      console.error('❌ Ошибка загрузки корзины:', err)
+      error.value = err.message
     } finally {
       loading.value = false
     }
@@ -101,19 +86,25 @@ export const useCartStore = defineStore('cart', () => {
       return removeFromCart(productId)
     }
 
+    loading.value = true
+    error.value = null
+
     try {
-      const item = {
-        product_id: productId,
-        quantity: quantity,
+      const response = await cartAPI.updateItem(productId, quantity, cartItems.value)
+
+      if (response && response.cart) {
+        cartItems.value = response.cart
+        await fetchCartDetails()
+        return true
       }
-      const response = await cartAPI.updateItem(item, cartItems.value)
-      cartItems.value = response.data.cart
-      saveCart()
-      await fetchCartDetails()
-      return true
+
+      throw new Error('Неверный формат ответа от сервера')
     } catch (err) {
-      console.error('Error updating cart:', err)
+      console.error('❌ Ошибка обновления корзины:', err)
+      error.value = err.message
       return false
+    } finally {
+      loading.value = false
     }
   }
 
@@ -121,15 +112,25 @@ export const useCartStore = defineStore('cart', () => {
    * Удалить товар из корзины
    */
   async function removeFromCart(productId) {
+    loading.value = true
+    error.value = null
+
     try {
       const response = await cartAPI.removeItem(productId, cartItems.value)
-      cartItems.value = response.data.cart
-      saveCart()
-      await fetchCartDetails()
-      return true
+
+      if (response && response.cart) {
+        cartItems.value = response.cart
+        await fetchCartDetails()
+        return true
+      }
+
+      throw new Error('Неверный формат ответа от сервера')
     } catch (err) {
-      console.error('Error removing from cart:', err)
+      console.error('❌ Ошибка удаления из корзины:', err)
+      error.value = err.message
       return false
+    } finally {
+      loading.value = false
     }
   }
 
@@ -139,7 +140,7 @@ export const useCartStore = defineStore('cart', () => {
   function clearCart() {
     cartItems.value = {}
     cartDetails.value = null
-    localStorage.removeItem(CART_STORAGE_KEY)
+    error.value = null
   }
 
   return {
@@ -147,12 +148,12 @@ export const useCartStore = defineStore('cart', () => {
     cartItems,
     cartDetails,
     loading,
+    error,
     // Getters
     itemsCount,
     totalPrice,
     hasItems,
     // Actions
-    initCart,
     addToCart,
     fetchCartDetails,
     updateQuantity,

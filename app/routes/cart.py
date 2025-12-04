@@ -29,7 +29,6 @@ class RemoveFromCartRequest(BaseModel):
     cart: Dict[int, int] = {}
 
 
-# ✅ Добавь эту модель
 class GetCartRequest(BaseModel):
     cart: Dict[int, int] = {}
 
@@ -42,7 +41,6 @@ def add_to_cart(request: AddToCartRequest, db: Session = Depends(get_db)):
     return {"cart": updated_cart}
 
 
-# ✅ Исправленный endpoint
 @router.post("", response_model=CartResponse, status_code=status.HTTP_200_OK)
 def get_cart(request: GetCartRequest, db: Session = Depends(get_db)):
     service = CartService(db)
@@ -62,7 +60,6 @@ def remove_from_cart(product_id: int, request: RemoveFromCartRequest, db: Sessio
     service = CartService(db)
     updated_cart = service.remove_from_cart(request.cart, product_id)
     return {"cart": updated_cart}
-
 
 
 
