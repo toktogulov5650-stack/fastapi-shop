@@ -1,9 +1,11 @@
 from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import List
+import os
 
 # Корень проекта fastapi-shop
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 class Settings(BaseSettings):
     app_name: str = "FastAPI Shop"
@@ -12,22 +14,31 @@ class Settings(BaseSettings):
     # URL базы данных
     database_url: str = "sqlite:///./shop.db"
 
-    # CORS: для продакшена оставляем только нужный порт
+    # CORS: динамически добавляем домен Render
     cors_origins: List[str] = [
-        "http://localhost:8000",   # один порт для всего
+        "http://localhost:8000",
         "http://127.0.0.1:8000",
-        "http://localhost:5173",   # на время разработки (если запускаешь отдельно)
+        "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
 
-    # Путь к собранному фронтенду (ВАЖНО: dist, а не frontend)
+    # Путь к собранному фронтенду
     static_dir: Path = BASE_DIR / "frontend" / "dist"
 
-    # Путь к assets (js, css, картинки) внутри dist
+    # Путь к assets
     images_dir: Path = static_dir / "assets"
 
     class Config:
-        env_file = ".env"  # можно переопределять через .env
+        env_file = ".env"
 
-# Создаём объект settings для импорта в main.py
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Добавляем Render URL в CORS если он есть
+        render_url = os.getenv("RENDER_EXTERNAL_URL")
+        if render_url and render_url not in self.cors_origins:
+            self.cors_origins.append(render_url)
+
+
+# Создаём объект settings
 settings = Settings()
+
