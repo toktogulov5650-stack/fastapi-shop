@@ -7,6 +7,7 @@ from pathlib import Path
 from .config import settings
 from .database import init_db
 from .routes import products_router, categories_router, cart_router
+from .seed_data import seed_database  # ← Добавили импорт
 
 app = FastAPI(
     title=settings.app_name,
@@ -40,6 +41,13 @@ app.include_router(cart_router)
 @app.on_event('startup')
 def on_startup():
     init_db()
+    # Запускаем заполнение базы тестовыми данными
+    try:
+        seed_database()
+        print("✅ Seed data executed successfully")
+    except Exception as e:
+        print(f"⚠️ Seed data warning: {e}")
+        # Не падаем если данные уже есть
 
 
 # -------------------
@@ -131,15 +139,3 @@ def serve_vue_app(full_path: str):
         return FileResponse(INDEX_FILE)
 
     raise HTTPException(status_code=404, detail="Frontend not found")
-
-
-
-
-
-
-
-
-
-
-
-
