@@ -2,24 +2,23 @@
 /**
  * API сервис для взаимодействия с backend.
  * Централизует все HTTP запросы к FastAPI серверу.
- * Использует axios для выполнения запросов.
  */
 
 import axios from 'axios'
 
-// Базовый URL API - используем относительный путь для одного порта
+// Базовый URL — если VITE_API_BASE_URL не задан, используем '/api'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
-// Создаем экземпляр axios с настройками по умолчанию
+// Создаем axios-клиент
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 секунд
+  timeout: 10000,
 })
 
-// Interceptor для логирования ошибок
+// Логирование ошибок
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -29,28 +28,21 @@ apiClient.interceptors.response.use(
 )
 
 /**
- * API методы для работы с товарами
+ * -----------------------------
+ * PRODUCTS API
+ * -----------------------------
  */
 export const productsAPI = {
-  /**
-   * Получить все товары
-   */
   async getAll() {
     const response = await apiClient.get('/products')
-    return response.data
+    return response.data // { products: [...] }
   },
 
-  /**
-   * Получить товар по ID
-   */
   async getById(id) {
     const response = await apiClient.get(`/products/${id}`)
-    return response.data
+    return response.data // { id, title, ... }
   },
 
-  /**
-   * Получить товары по категории
-   */
   async getByCategory(categoryId) {
     const response = await apiClient.get(`/products/category/${categoryId}`)
     return response.data
@@ -58,20 +50,16 @@ export const productsAPI = {
 }
 
 /**
- * API методы для работы с категориями
+ * -----------------------------
+ * CATEGORIES API
+ * -----------------------------
  */
 export const categoriesAPI = {
-  /**
-   * Получить все категории
-   */
   async getAll() {
     const response = await apiClient.get('/categories')
-    return response.data
+    return response.data // [ {id,name}, ... ]
   },
 
-  /**
-   * Получить категорию по ID
-   */
   async getById(id) {
     const response = await apiClient.get(`/categories/${id}`)
     return response.data
@@ -79,51 +67,39 @@ export const categoriesAPI = {
 }
 
 /**
- * API методы для работы с корзиной
+ * -----------------------------
+ * CART API
+ * -----------------------------
  */
 export const cartAPI = {
-  /**
-   * Добавить товар в корзину
-   */
   async addItem(productId, quantity, cartData = {}) {
     const response = await apiClient.post('/cart/add', {
       product_id: productId,
-      quantity: quantity,
+      quantity,
       cart: cartData,
     })
     return response.data
   },
 
-  /**
-   * Получить содержимое корзины
-   */
   async getCart(cartData = {}) {
     const response = await apiClient.post('/cart', {
-      cart: cartData
+      cart: cartData,
     })
     return response.data
   },
 
-  /**
-   * Обновить количество товара
-   */
   async updateItem(productId, quantity, cartData = {}) {
     const response = await apiClient.put('/cart/update', {
       product_id: productId,
-      quantity: quantity,
+      quantity,
       cart: cartData,
     })
     return response.data
   },
 
-  /**
-   * Удалить товар из корзины
-   */
   async removeItem(productId, cartData = {}) {
     const response = await apiClient.delete(`/cart/remove/${productId}`, {
-      data: {
-        cart: cartData,
-      },
+      data: { cart: cartData },
     })
     return response.data
   },
