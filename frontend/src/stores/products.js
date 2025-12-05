@@ -35,7 +35,7 @@ export const useProductsStore = defineStore('products', () => {
     error.value = null
     try {
       const response = await productsAPI.getAll()
-      products.value = response.data.products
+      products.value = response.products
     } catch (err) {
       error.value = 'Failed to load products'
       console.error('Error fetching products:', err)
